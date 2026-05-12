@@ -1,0 +1,17 @@
+---
+interface Props {
+  label: string;
+  variant?: "default" | "subtle";
+}
+
+const { label, variant = "default" } = Astro.props;
+
+const base =
+  "inline-flex items-center rounded-full px-2.5 py-0.5 font-sans text-xs uppercase tracking-wider";
+const variants = {
+  default: "bg-ember-700/30 text-ember-300 ring-1 ring-inset ring-ember-700/40",
+  subtle: "bg-ink-700/40 text-ink-200 ring-1 ring-inset ring-ink-500/30",
+};
+---
+
+<span class={`${base} ${variants[variant]}`}>{label}</span>

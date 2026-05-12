@@ -3,7 +3,7 @@
 interface ImportMetaEnv {
   readonly NOTION_TOKEN: string;
   readonly NOTION_PARENT_PAGE: string;
-  readonly NOTION_DATABASE_ID?: string;
+  readonly NOTION_DATABASE_ID: string;
 }
 
 interface ImportMeta {

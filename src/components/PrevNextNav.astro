@@ -1,0 +1,42 @@
+---
+import type { CronicaMeta } from "@/lib/notion-types";
+
+interface Props {
+  prev: CronicaMeta | null;
+  next: CronicaMeta | null;
+}
+
+const { prev, next } = Astro.props;
+---
+
+{(prev || next) && (
+  <nav class="mt-16 flex flex-col gap-3 border-t border-ink-500/30 pt-8 font-sans sm:flex-row sm:justify-between">
+    {prev ? (
+      <a
+        href={`/cronicas/${prev.slug}/`}
+        class="group flex max-w-md flex-col rounded-md border border-ink-500/30 p-4 transition hover:border-ember-500/50 hover:bg-ink-700/30"
+      >
+        <span class="text-xs uppercase tracking-[0.2em] text-ink-300">← Sesión anterior</span>
+        <span class="mt-1 font-serif text-lg text-ink-50 group-hover:text-ember-300">
+          {prev.title}
+        </span>
+      </a>
+    ) : (
+      <span />
+    )}
+
+    {next ? (
+      <a
+        href={`/cronicas/${next.slug}/`}
+        class="group flex max-w-md flex-col rounded-md border border-ink-500/30 p-4 text-right transition hover:border-ember-500/50 hover:bg-ink-700/30 sm:ml-auto"
+      >
+        <span class="text-xs uppercase tracking-[0.2em] text-ink-300">Sesión siguiente →</span>
+        <span class="mt-1 font-serif text-lg text-ink-50 group-hover:text-ember-300">
+          {next.title}
+        </span>
+      </a>
+    ) : (
+      <span />
+    )}
+  </nav>
+)}

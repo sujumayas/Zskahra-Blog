@@ -1,0 +1,26 @@
+---
+interface Props {
+  html: string;
+}
+
+const { html } = Astro.props;
+---
+
+<div
+  class="prose prose-invert prose-lg max-w-none
+         prose-headings:font-serif prose-headings:font-normal prose-headings:text-ink-50
+         prose-h2:mt-12 prose-h2:mb-4 prose-h2:text-3xl prose-h2:tracking-tight
+         prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-xl prose-h3:text-ember-300
+         prose-p:text-ink-100 prose-p:leading-relaxed
+         prose-a:text-ember-300 prose-a:no-underline hover:prose-a:underline
+         prose-strong:text-ink-50
+         prose-blockquote:border-l-ember-500 prose-blockquote:bg-ink-700/30
+         prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:not-italic
+         prose-blockquote:text-ink-200
+         prose-li:text-ink-100
+         prose-img:rounded-md prose-img:border prose-img:border-ink-500/30
+         prose-hr:border-ink-500/30
+         prose-code:text-ember-300 prose-code:bg-ink-700/40 prose-code:px-1
+         prose-code:rounded prose-code:before:content-[''] prose-code:after:content-['']"
+  set:html={html}
+/>

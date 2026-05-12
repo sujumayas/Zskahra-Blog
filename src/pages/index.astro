@@ -1,5 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import CronicaCard from "@/components/CronicaCard.astro";
+import { listPublishedCronicas } from "@/lib/notion";
+
+const cronicas = await listPublishedCronicas();
 ---
 
 <BaseLayout title="Zskahra · Crónicas">
@@ -11,18 +15,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       Crónicas de Zskahra
     </h1>
     <p class="mt-4 max-w-prose text-ink-200">
-      Aquí viven las crónicas escritas por los jugadores tras cada sesión. Aún
-      no hay nada publicado — pronto.
+      Cada entrada es la crónica de una sesión, escrita por uno de los
+      jugadores. El cronista rota.
     </p>
   </header>
 
-  <section
-    class="rounded border border-ink-500/40 bg-ink-700/30 p-6 font-sans text-sm text-ink-200"
-  >
-    <p class="font-semibold text-ember-300">Estado: bootstrap</p>
-    <p class="mt-2">
-      Proyecto inicializado con Astro 6 + Tailwind v4 + TypeScript strict. La
-      integración con Notion llega en la siguiente fase.
-    </p>
-  </section>
+  {cronicas.length === 0 ? (
+    <section
+      class="rounded-md border border-ink-500/40 bg-ink-700/30 p-8 font-sans text-ink-200"
+    >
+      <p class="text-ember-300">Aún no hay crónicas publicadas.</p>
+      <p class="mt-2 text-sm">
+        Marca una crónica como <code class="text-ember-300">Estado = Publicado</code> en Notion
+        y volverá a aparecer aquí en el próximo build.
+      </p>
+    </section>
+  ) : (
+    <section class="flex flex-col gap-4">
+      {cronicas.map((cronica) => (
+        <CronicaCard cronica={cronica} />
+      ))}
+    </section>
+  )}
 </BaseLayout>
