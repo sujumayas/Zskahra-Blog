@@ -51,3 +51,59 @@ a.wikilink::before {
   font-size: 0.75em;
   vertical-align: super;
 }
+
+/* Imágenes de Notion como thumbnails clickeables.
+   El transformer emite <figure class="thumb"> y figuras consecutivas se
+   agrupan en .thumb-row para el layout en grilla. */
+.prose .thumb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.prose figure.thumb {
+  flex: 0 0 calc((100% - 1.5rem) / 3); /* 3 columnas - 2 gaps de 0.75rem */
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .prose figure.thumb {
+    flex-basis: calc((100% - 0.75rem) / 2); /* 2 columnas en tablet */
+  }
+}
+
+@media (max-width: 480px) {
+  .prose figure.thumb {
+    flex-basis: 100%; /* 1 columna en mobile */
+  }
+}
+
+.prose figure.thumb a {
+  display: block;
+  text-decoration: none;
+}
+
+.prose figure.thumb img {
+  width: 100%;
+  height: auto;
+  margin: 0;
+  display: block;
+  border-radius: 0.375rem;
+  border: 1px solid rgb(61 52 36 / 0.4);
+  transition: border-color 160ms, transform 160ms;
+}
+
+.prose figure.thumb a:hover img {
+  border-color: var(--color-ember-500);
+  transform: scale(1.015);
+}
+
+.prose figure.thumb figcaption {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-ink-300);
+  text-align: center;
+  margin-top: 0.4rem;
+  line-height: 1.3;
+}

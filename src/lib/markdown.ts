@@ -48,14 +48,20 @@ n2m.setCustomTransformer("image", async (block) => {
 
   if (!url) return "";
 
+  let src = url;
   try {
     // @ts-expect-error block.id is real
-    const localPath = await downloadImage(url, block.id);
-    return `![${caption}](${localPath})`;
+    src = await downloadImage(url, block.id);
   } catch (err) {
     console.warn(`[notion] No pude descargar ${url}:`, (err as Error).message);
-    return `![${caption}](${url})`;
   }
+
+  const alt = escapeHtml(caption);
+  const captionHtml = caption ? `<figcaption>${alt}</figcaption>` : "";
+  // Inline (sin saltos de línea) para que marked lo trate como HTML block
+  // y no lo envuelva en <p>. Tres figuras consecutivas → contiguas en el HTML
+  // y agrupadas después en .thumb-row para el layout flex.
+  return `<figure class="thumb"><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="${alt}" loading="lazy" />${captionHtml}</a></figure>`;
 });
 
 async function downloadImage(url: string, blockId: string): Promise<string> {
@@ -149,6 +155,15 @@ function extractWikilinks(md: string): Wikilink[] {
   return out;
 }
 
+// Agrupa figuras .thumb consecutivas en un .thumb-row para el layout flex.
+// Cuenta como "consecutivas" si solo hay espacios o saltos de línea entre ellas.
+function groupThumbRows(html: string): string {
+  return html.replace(
+    /(<figure class="thumb">[\s\S]*?<\/figure>)(?:\s*<figure class="thumb">[\s\S]*?<\/figure>)*/g,
+    (match) => `<div class="thumb-row">${match}</div>`,
+  );
+}
+
 function injectHeadingIds(html: string): { html: string; headings: Heading[] } {
   const headings: Heading[] = [];
   const usedIds = new Map<string, number>();
@@ -178,7 +193,8 @@ export async function pageToRendered(pageId: string): Promise<RenderedPage> {
 
   const marked = buildMarked();
   const rawHtml = (await marked.parse(md)) as string;
-  const { html, headings } = injectHeadingIds(rawHtml);
+  const grouped = groupThumbRows(rawHtml);
+  const { html, headings } = injectHeadingIds(grouped);
 
   return { html, headings, wikilinks };
 }
