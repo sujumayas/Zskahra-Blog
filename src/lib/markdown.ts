@@ -61,10 +61,15 @@ n2m.setCustomTransformer("image", async (block) => {
 async function downloadImage(url: string, blockId: string): Promise<string> {
   const ext = extname(new URL(url).pathname) || ".png";
   const flatId = blockId.replaceAll("-", "");
-  const dir = resolve(process.cwd(), "public/images/notion");
   const filename = `${flatId}${ext}`;
-  const fullPath = resolve(dir, filename);
   const publicPath = `/images/notion/${filename}`;
+
+  // En build, Astro copia public/ → dist/ antes de que corra el SSG (donde se
+  // dispara este transformer), así que escribimos directo al outDir. En dev,
+  // public/ es lo que sirve astro dev.
+  const baseDir = import.meta.env.PROD ? "dist/images/notion" : "public/images/notion";
+  const dir = resolve(process.cwd(), baseDir);
+  const fullPath = resolve(dir, filename);
 
   if (existsSync(fullPath)) return publicPath;
 
