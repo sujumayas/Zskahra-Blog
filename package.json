@@ -8,7 +8,8 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "setup:notion": "node --env-file=.env scripts/setup-notion.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.5",
