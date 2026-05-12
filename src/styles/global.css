@@ -26,3 +26,28 @@ html {
   color: var(--color-ink-100);
   font-family: var(--font-serif);
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+a.wikilink {
+  color: var(--color-ember-300);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-ember-700);
+  padding-bottom: 1px;
+  transition: color 120ms, border-color 120ms;
+}
+
+a.wikilink:hover {
+  color: var(--color-ink-50);
+  border-bottom-color: var(--color-ember-500);
+  border-bottom-style: solid;
+}
+
+a.wikilink::before {
+  content: "✦ ";
+  color: var(--color-ember-700);
+  font-size: 0.75em;
+  vertical-align: super;
+}

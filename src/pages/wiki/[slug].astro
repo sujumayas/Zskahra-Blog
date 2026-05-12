@@ -1,0 +1,72 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAllWikilinks, getWikilink } from "@/lib/notion";
+
+export async function getStaticPaths() {
+  const all = await getAllWikilinks();
+  return Array.from(all.values()).map((entity) => ({
+    params: { slug: entity.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+if (!slug) throw new Error("Missing slug param");
+
+const entity = await getWikilink(slug);
+if (!entity) throw new Error(`Entidad wiki no encontrada: ${slug}`);
+---
+
+<BaseLayout
+  title={`${entity.name} · Zskahra`}
+  description={`Entidad del mundo: ${entity.name}`}
+>
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <a
+      href="/"
+      class="font-sans text-xs uppercase tracking-[0.2em] text-ink-300 transition hover:text-ember-300"
+    >
+      ← Todas las crónicas
+    </a>
+
+    <header class="mt-6 border-b border-ink-500/30 pb-6">
+      <p class="font-sans text-sm uppercase tracking-[0.3em] text-ember-500">
+        Entidad del mundo
+      </p>
+      <h1 class="mt-3 font-serif text-4xl font-light leading-tight text-ink-50">
+        {entity.name}
+      </h1>
+    </header>
+
+    <section
+      class="mt-8 rounded-md border border-ink-500/40 bg-ink-700/30 p-6 font-sans text-ink-200"
+    >
+      <p class="text-ember-300">Esta entidad aún no tiene página oficial.</p>
+      <p class="mt-2 text-sm">
+        Pronto se documentará aquí. Por ahora, mira las crónicas donde aparece.
+      </p>
+    </section>
+
+    {entity.mentions.length > 0 && (
+      <section class="mt-10">
+        <h2 class="font-sans text-xs uppercase tracking-[0.3em] text-ink-300">
+          Mencionada en
+        </h2>
+        <ul class="mt-4 flex flex-col gap-2">
+          {entity.mentions.map((m) => (
+            <li>
+              <a
+                href={`/cronicas/${m.slug}/`}
+                class="group flex items-center justify-between rounded-md border border-ink-500/30 px-4 py-3 transition hover:border-ember-500/50 hover:bg-ink-700/30"
+              >
+                <span class="font-serif text-lg text-ink-50 group-hover:text-ember-300">
+                  {m.title}
+                </span>
+                <span class="font-sans text-xs text-ink-300 group-hover:text-ember-300">→</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </div>
+</BaseLayout>

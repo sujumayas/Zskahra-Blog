@@ -1,9 +1,28 @@
 import { Client } from "@notionhq/client";
 import { NotionToMarkdown } from "notion-to-md";
-import { marked } from "marked";
+import { Marked } from "marked";
 import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve, extname } from "node:path";
+import { slugify } from "./slug";
+
+export interface Heading {
+  id: string;
+  text: string;
+  depth: 2 | 3;
+}
+
+export interface Wikilink {
+  target: string;
+  slug: string;
+  alias: string | null;
+}
+
+export interface RenderedPage {
+  html: string;
+  headings: Heading[];
+  wikilinks: Wikilink[];
+}
 
 const notion = new Client({ auth: import.meta.env.NOTION_TOKEN });
 
@@ -13,7 +32,7 @@ const n2m = new NotionToMarkdown({
 });
 
 n2m.setCustomTransformer("image", async (block) => {
-  // @ts-expect-error notion-to-md no expone tipos buenos para el block
+  // @ts-expect-error notion-to-md type defs are loose
   const image = block.image;
   let url = "";
   let caption = "";
@@ -30,7 +49,7 @@ n2m.setCustomTransformer("image", async (block) => {
   if (!url) return "";
 
   try {
-    // @ts-expect-error block.id existe en blocks reales
+    // @ts-expect-error block.id is real
     const localPath = await downloadImage(url, block.id);
     return `![${caption}](${localPath})`;
   } catch (err) {
@@ -57,10 +76,104 @@ async function downloadImage(url: string, blockId: string): Promise<string> {
   return publicPath;
 }
 
-marked.setOptions({ gfm: true, breaks: false });
+const WIKILINK_RE = /\[\[([^\]|\n]+?)(?:\|([^\]\n]+?))?\]\]/g;
 
-export async function pageToHtml(pageId: string): Promise<string> {
+function escapeHtml(s: string): string {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+// Build a per-render marked instance with the wikilink extension.
+function buildMarked(): Marked {
+  const m = new Marked({ gfm: true, breaks: false });
+  m.use({
+    extensions: [
+      {
+        name: "wikilink",
+        level: "inline",
+        start(src: string) {
+          const i = src.indexOf("[[");
+          return i === -1 ? undefined : i;
+        },
+        tokenizer(src: string) {
+          WIKILINK_RE.lastIndex = 0;
+          const match = /^\[\[([^\]|\n]+?)(?:\|([^\]\n]+?))?\]\]/.exec(src);
+          if (!match) return;
+          return {
+            type: "wikilink",
+            raw: match[0],
+            target: match[1]!.trim(),
+            alias: match[2]?.trim() ?? null,
+          };
+        },
+        renderer(token) {
+          const target = (token as unknown as { target: string }).target;
+          const alias = (token as unknown as { alias: string | null }).alias;
+          const slug = slugify(target);
+          const label = alias ?? target;
+          return `<a href="/wiki/${slug}/" class="wikilink">${escapeHtml(label)}</a>`;
+        },
+      },
+    ],
+  });
+  return m;
+}
+
+function extractWikilinks(md: string): Wikilink[] {
+  // Remove fenced code + inline code so we don't pick up bracketed text inside them.
+  const cleaned = md
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`\n]*`/g, "");
+
+  const seen = new Set<string>();
+  const out: Wikilink[] = [];
+  WIKILINK_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = WIKILINK_RE.exec(cleaned))) {
+    const target = match[1]!.trim();
+    const alias = match[2]?.trim() ?? null;
+    const slug = slugify(target);
+    const dedupeKey = `${slug}|${alias ?? ""}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    out.push({ target, slug, alias });
+  }
+  return out;
+}
+
+function injectHeadingIds(html: string): { html: string; headings: Heading[] } {
+  const headings: Heading[] = [];
+  const usedIds = new Map<string, number>();
+
+  const newHtml = html.replace(
+    /<h([23])>([\s\S]+?)<\/h\1>/g,
+    (_match, level, inner) => {
+      const depth = Number(level) as 2 | 3;
+      const text = (inner as string).replace(/<[^>]+>/g, "").trim();
+      let id = slugify(text);
+      if (!id) id = `heading-${headings.length + 1}`;
+      const count = usedIds.get(id) ?? 0;
+      usedIds.set(id, count + 1);
+      if (count > 0) id = `${id}-${count + 1}`;
+      headings.push({ id, text, depth });
+      return `<h${level} id="${id}">${inner}</h${level}>`;
+    },
+  );
+
+  return { html: newHtml, headings };
+}
+
+export async function pageToRendered(pageId: string): Promise<RenderedPage> {
   const blocks = await n2m.pageToMarkdown(pageId);
   const md = n2m.toMarkdownString(blocks).parent ?? "";
-  return marked.parse(md) as string;
+  const wikilinks = extractWikilinks(md);
+
+  const marked = buildMarked();
+  const rawHtml = (await marked.parse(md)) as string;
+  const { html, headings } = injectHeadingIds(rawHtml);
+
+  return { html, headings, wikilinks };
 }

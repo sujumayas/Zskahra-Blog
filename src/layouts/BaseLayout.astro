@@ -22,8 +22,6 @@ const { title, description = "Crónicas de sesión TTRPG" } = Astro.props;
     <title>{title}</title>
   </head>
   <body class="min-h-screen bg-ink-900 text-ink-100 antialiased">
-    <main class="mx-auto max-w-4xl px-6 py-12">
-      <slot />
-    </main>
+    <slot />
   </body>
 </html>

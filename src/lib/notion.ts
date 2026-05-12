@@ -4,23 +4,35 @@ import {
   getRichText,
   getTitle,
   mapCronicaMeta,
-  type CronicaFull,
   type CronicaMeta,
 } from "./notion-types";
 import { resolveCollisions, slugify } from "./slug";
-import { pageToHtml } from "./markdown";
+import { pageToRendered, type Heading, type RenderedPage, type Wikilink } from "./markdown";
+
+export interface CronicaFull extends CronicaMeta {
+  html: string;
+  headings: Heading[];
+  wikilinks: Wikilink[];
+}
+
+export interface WikiEntity {
+  slug: string;
+  name: string;
+  mentions: Array<{ slug: string; title: string }>;
+}
 
 const NOTION_TOKEN = import.meta.env.NOTION_TOKEN;
 const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID;
 
 if (!NOTION_TOKEN) throw new Error("Falta NOTION_TOKEN en el entorno");
 if (!NOTION_DATABASE_ID)
-  throw new Error("Falta NOTION_DATABASE_ID en el entorno (corre `npm run setup:notion`)");
+  throw new Error("Falta NOTION_DATABASE_ID (corre `npm run setup:notion`)");
 
 const notion = new Client({ auth: NOTION_TOKEN });
 
 let metaCache: CronicaMeta[] | null = null;
-const htmlCache = new Map<string, string>();
+const renderCache = new Map<string, RenderedPage>();
+let wikiCache: Map<string, WikiEntity> | null = null;
 
 async function fetchAllPublishedPages(): Promise<PageObjectResponse[]> {
   const pages: PageObjectResponse[] = [];
@@ -54,6 +66,14 @@ export async function listPublishedCronicas(): Promise<CronicaMeta[]> {
   return metaCache;
 }
 
+async function renderCronica(notionId: string): Promise<RenderedPage> {
+  const cached = renderCache.get(notionId);
+  if (cached) return cached;
+  const rendered = await pageToRendered(notionId);
+  renderCache.set(notionId, rendered);
+  return rendered;
+}
+
 export async function getAllSlugs(): Promise<string[]> {
   const cronicas = await listPublishedCronicas();
   return cronicas.map((c) => c.slug);
@@ -63,13 +83,8 @@ export async function getCronicaBySlug(slug: string): Promise<CronicaFull | null
   const cronicas = await listPublishedCronicas();
   const meta = cronicas.find((c) => c.slug === slug);
   if (!meta) return null;
-
-  let html = htmlCache.get(meta.notionId);
-  if (!html) {
-    html = await pageToHtml(meta.notionId);
-    htmlCache.set(meta.notionId, html);
-  }
-  return { ...meta, html };
+  const rendered = await renderCronica(meta.notionId);
+  return { ...meta, ...rendered };
 }
 
 export async function getAdjacentCronicas(
@@ -78,9 +93,40 @@ export async function getAdjacentCronicas(
   const cronicas = await listPublishedCronicas();
   const i = cronicas.findIndex((c) => c.slug === slug);
   if (i === -1) return { prev: null, next: null };
-  // cronicas está ordenada por número desc → "siguiente" en lectura cronológica es la de antes en el array
+  // metaCache está ordenada por Número de sesión desc → la siguiente en lectura
+  // cronológica es la anterior en el array
   return {
     prev: cronicas[i + 1] ?? null,
     next: cronicas[i - 1] ?? null,
   };
+}
+
+export async function getAllWikilinks(): Promise<Map<string, WikiEntity>> {
+  if (wikiCache) return wikiCache;
+
+  const cronicas = await listPublishedCronicas();
+  const wikiMap = new Map<string, WikiEntity>();
+
+  for (const cronica of cronicas) {
+    const rendered = await renderCronica(cronica.notionId);
+    for (const link of rendered.wikilinks) {
+      const existing = wikiMap.get(link.slug) ?? {
+        slug: link.slug,
+        name: link.target,
+        mentions: [],
+      };
+      if (!existing.mentions.some((m) => m.slug === cronica.slug)) {
+        existing.mentions.push({ slug: cronica.slug, title: cronica.title });
+      }
+      wikiMap.set(link.slug, existing);
+    }
+  }
+
+  wikiCache = wikiMap;
+  return wikiMap;
+}
+
+export async function getWikilink(slug: string): Promise<WikiEntity | null> {
+  const all = await getAllWikilinks();
+  return all.get(slug) ?? null;
 }

@@ -28,7 +28,7 @@ const DB_PROPERTIES = {
   "Título": { title: {} },
   "Número de sesión": { number: { format: "number" } },
   "Fecha IRL": { date: {} },
-  "Fecha in-game": { date: {} },
+  "Fecha-mundo": { rich_text: {} },
   "Cronista": { select: { options: [] } },
   "Personajes presentes": { multi_select: { options: [] } },
   "Estado": { select: { options: STATUS_OPTIONS } },
@@ -93,53 +93,8 @@ const templateBlocks = () => [
       icon: { type: "emoji", emoji: "📜" },
       color: "brown_background",
       rich_text: text(
-        "Duplica esta página (· · · → Duplicate) en lugar de editarla directamente. Rellena las properties de arriba y reemplaza el contenido de cada sección. Cuando termines, cambia Estado a “Listo” para publicar.",
+        "Duplica esta página (· · · → Duplicate) y reemplaza este contenido por tu crónica — escríbela como quieras. Lo importante es llenar las properties de arriba (Título, Número, Fechas, Cronista, Personajes, Resumen corto, Etiquetas). Cuando termines, cambia Estado a “Listo”. Tip: usa [[Nombre de entidad]] para enlazar a personajes, lugares o facciones; la web genera links automáticos.",
       ),
-    },
-  },
-  { object: "block", type: "heading_2", heading_2: { rich_text: text("Resumen en una línea") } },
-  {
-    object: "block",
-    type: "paragraph",
-    paragraph: { rich_text: text("Una frase que capture la esencia de la sesión.") },
-  },
-  { object: "block", type: "heading_2", heading_2: { rich_text: text("Lo que pasó") } },
-  { object: "block", type: "heading_3", heading_3: { rich_text: text("Inicio") } },
-  { object: "block", type: "paragraph", paragraph: { rich_text: text("Cómo arrancó la sesión.") } },
-  { object: "block", type: "heading_3", heading_3: { rich_text: text("Nudo") } },
-  {
-    object: "block",
-    type: "paragraph",
-    paragraph: { rich_text: text("Conflictos, giros, escenas centrales.") },
-  },
-  { object: "block", type: "heading_3", heading_3: { rich_text: text("Cierre") } },
-  {
-    object: "block",
-    type: "paragraph",
-    paragraph: { rich_text: text("Cómo terminó. Cliffhangers o resoluciones.") },
-  },
-  { object: "block", type: "heading_2", heading_2: { rich_text: text("Momentos memorables") } },
-  { object: "block", type: "bulleted_list_item", bulleted_list_item: { rich_text: text("…") } },
-  { object: "block", type: "heading_2", heading_2: { rich_text: text("Decisiones importantes") } },
-  { object: "block", type: "bulleted_list_item", bulleted_list_item: { rich_text: text("…") } },
-  { object: "block", type: "heading_2", heading_2: { rich_text: text("Pistas y hilos sueltos") } },
-  { object: "block", type: "bulleted_list_item", bulleted_list_item: { rich_text: text("…") } },
-  {
-    object: "block",
-    type: "toggle",
-    toggle: {
-      rich_text: text("Notas del cronista"),
-      children: [
-        {
-          object: "block",
-          type: "paragraph",
-          paragraph: {
-            rich_text: text(
-              "Notas privadas: dudas, cosas a chequear con el DM, ideas para la próxima sesión, lo que no entró en la crónica.",
-            ),
-          },
-        },
-      ],
     },
   },
 ];

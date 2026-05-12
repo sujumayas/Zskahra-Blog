@@ -6,7 +6,7 @@ export interface CronicaMeta {
   title: string;
   sessionNumber: number | null;
   fechaIRL: string | null;
-  fechaInGame: string | null;
+  fechaMundo: string;
   cronista: string | null;
   personajes: string[];
   etiquetas: string[];
@@ -60,7 +60,7 @@ export function mapCronicaMeta(page: PageObjectResponse, slug: string): CronicaM
     title: getTitle(page, "Título"),
     sessionNumber: getNumber(page, "Número de sesión"),
     fechaIRL: getDate(page, "Fecha IRL"),
-    fechaInGame: getDate(page, "Fecha in-game"),
+    fechaMundo: getRichText(page, "Fecha-mundo"),
     cronista: getSelect(page, "Cronista"),
     personajes: getMultiSelect(page, "Personajes presentes"),
     etiquetas: getMultiSelect(page, "Etiquetas"),
